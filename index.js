@@ -2,9 +2,10 @@ const express = require('express');
 const { Sequelize, DataTypes } = require('sequelize');
 
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT || 8080;
 
-app.use(express.text());
+app.use(express.text({ type: '*/*' }));
 app.use(express.urlencoded({ extended: true }));
 
 const sequelize = new Sequelize('cloud_computing', 'root', '1234Aa', {
@@ -34,12 +35,22 @@ sequelize.sync()
     .catch(err => console.error('syncing database error :', err));
 
 app.get('/healthz', async (req, res) => {
-    if (req.body && Object.keys(req.body).length > 0) {
-        return res.status(400).end(); 
+    if (
+        (Object.keys(req.query).length > 0) ||// if there are query parameters
+        (req.body && Object.keys(req.body).length > 0) || // not empty req body
+        (typeof req.body === 'string' && req.body.trim().length > 0) // not empty req body
+    ) {
+
+        return res.status(400).set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        }).end();
+        
     }
 
     try {
-        await HealthCheck.create({}); 
+        await HealthCheck.create({});
 
         res.set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -47,27 +58,34 @@ app.get('/healthz', async (req, res) => {
             'X-Content-Type-Options': 'nosniff'
         });
 
-        return res.status(200).end(); 
+        return res.status(200).end();
     } catch (error) {
-        console.error('NOT INSERT Health Check:', error);
+        console.error('Can not insert record:', error);
 
         return res.status(503).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
-        }).end(); 
+        }).end();
     }
 });
 
 app.all('/healthz', (req, res) => {
-    return res.status(405).set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'X-Content-Type-Options': 'nosniff'
-    }).end();
+    // Only HTTP GET the method is supported by the /healthz endpoint. All other methods should return HTTP code for Method Not Allowed.
+    if (req.method !== 'GET') {
+        return res.status(405).set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        }).end();
+    }
+   
 });
 
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+}
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+module.exports = app;
