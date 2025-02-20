@@ -1,4 +1,4 @@
-name: Web App Test Continuous Integration
+name: Web App Tests Continuous Integration File
 
 on:
   pull_request:
