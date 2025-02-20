@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { Sequelize, DataTypes } = require('sequelize');
 
@@ -8,9 +9,10 @@ const PORT = process.env.PORT || 8080;
 app.use(express.text({ type: '*/*' }));
 app.use(express.urlencoded({ extended: true }));
 
-const sequelize = new Sequelize('cloud_computing', 'root', '1234Aa', {
-    host: 'localhost',
-    dialect: 'mysql',
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    dialect: process.env.DIALECT,
+    port: process.env.DB_PORT,
     logging: false,
 });
 

@@ -3,25 +3,31 @@
 # stop the script if a command fails
 set -e
 
+MYSQL_ROOT_PASSWORD="1234Aa"
+DB_NAME="cloud_computing"
+
 # Update the package lists for upgrades for packages that need upgrading & Update the packages on the system.
 sudo apt update && sudo apt upgrade -y
 
-# install mysql & unzip
-sudo apt install -y mysql-server unzip
+# install mysql & unzip & Node.js
+sudo apt install -y mysql-server unzip nodejs npm
+
 
 # start and enable mysql
 sudo systemctl start mysql
 sudo systemctl enable mysql
 
 # access server ip address & bind to ip address
-ipaddress=$(hostname -I | awk '{print $1}')
-sudo sed -i "s/^bind-address.*/bind-address = $ipaddress/" /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo sed -i "s/^bind-address.*/bind-address = 127.0.0.1/" /etc/mysql/mysql.conf.d/mysqld.cnf
 
 #restart mysql
 sudo systemctl restart mysql
 
-# create a database
-sudo mysql -u root -e "create database newdb;"
+# set root password and apply privileges
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+
+# create the database 
+sudo mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME} DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;"
 
 # create a new linux group for the application
 sudo groupadd newgroup
