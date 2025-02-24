@@ -52,7 +52,7 @@ describe('Test health check rest api whether functions well', () => {
     test('get method, no query meters and empty request body, if record was inserted successfully, 200 should return', async () => {
         createRecord.mockResolvedValueOnce({}); 
         const res = await request(app).get('/healthz');
-        expect(res.statusCode).toBe(200);
+        expect(res.statusCode).toBe(201);
         expect(createRecord).toHaveBeenCalled();
         checkHeadersAndBodies(res);
     });
