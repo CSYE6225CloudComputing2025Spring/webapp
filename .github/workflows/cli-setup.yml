@@ -9,7 +9,6 @@ on:
 jobs:
   cli-test-artifact:
     runs-on: ubuntu-latest
-
     if: github.event.pull_request.merged == true
 
     steps:
@@ -26,35 +25,46 @@ jobs:
       - name: Setup Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY  }}
+          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
-        
-      
 
       - name: Install dependencies
-        run: npm install  
-        
-      - name: Run tests
-        run: npm test  
-        
-      - name: Build application artifact
-        run: npm run build  
+        run: npm install --production  
+
+      - name: Package backend API into a zip file
+        run: zip -r backend-api.zip index.js package.json package-lock.json node_modules/ tests/ .env
+
+      - name: Upload backend API artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-api
+          path: backend-api.zip
+          retention-days: 5
 
   image_build:
+    needs: cli-test-artifact
     runs-on: ubuntu-latest
     strategy:
       matrix:
         cloud: [aws, gcp]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Install Packer
         run: |
-          if ! command -v packer &> /dev/null; then
-            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-            sudo apt update && sudo apt install -y packer
-          fi
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          sudo apt update && sudo apt install -y packer
+
+      - name: Download backend API artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-api
+          path: /tmp
+
+      - name: Extract backend API
+        run: unzip /tmp/backend-api.zip -d /tmp/backend-api
 
       - name: Set up AWS Client Interface
         if: matrix.cloud == 'aws'
@@ -65,22 +75,16 @@ jobs:
           aws-region: us-east-1
 
       - name: Setup Google Cloud SDK
+        if: matrix.cloud == 'gcp'
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY  }}
+          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
 
       - name: Run Packer Build
         run: |
           if [ "${{ matrix.cloud }}" == "aws" ]; then
-            packer build -var "AWS_ACCESS_KEY=${{ secrets.AWS_DEV_ACCESS_KEY_ID }}" -var "AWS_SECRET_KEY=${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}" machine-image.pkr.hcl
+            packer build machine-image.pkr.hcl
           else
-            packer build -var "GCP_CREDENTIALS=${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}" machine-image.pkr.hcl
+            packer build machine-image.pkr.hcl
           fi
-
-
-
-
-
-          
-     
