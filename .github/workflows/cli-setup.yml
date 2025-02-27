@@ -78,12 +78,7 @@ jobs:
         run: packer fmt -check -diff machine-image.pkr.hcl
           
       - name: Run packer validate
-        run: |
-          packer validate \
-            -var "AWS_ACCESS_KEY=dummy-access-key" \
-            -var "AWS_SECRET_KEY=dummy-secret-key" \
-            -var "mysql_root_password=dummy-password" \
-            machine-image.pkr.hcl
+        run: packer validate machine-image.pkr.hcl
           
       - name: Run Packer Build
         run: |
