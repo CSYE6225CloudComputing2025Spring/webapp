@@ -15,19 +15,11 @@ packer {
 variable "AWS_ACCESS_KEY" {
   type        = string
   description = "AWS access key for authentication"
-  default     = "dummy-access-key"  # Temporary value for validation
 }
 
 variable "AWS_SECRET_KEY" {
   type        = string
   description = "AWS secret key for authentication"
-  default     = "dummy-secret-key"  # Temporary value for validation
-}
-
-variable "mysql_root_password" {
-  type        = string
-  description = "The root password for MySQL"
-  default     = "dummy-password"  # Temporary value for validation
 }
 
 variable "aws-region" {
@@ -63,6 +55,10 @@ variable "gcp_zone" {
   default = "us-central1-a"
 }
 
+variable "mysql_root_password" {
+  type        = string
+  description = "The root password for MySQL"
+}
 
 variable "db_name" {
   type        = string
