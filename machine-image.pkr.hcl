@@ -4,13 +4,13 @@ packer {
       version = ">= 1.0.0, < 2.0.0"
       source  = "github.com/hashicorp/amazon"
     }
-
-    google = {
+    googlecompute = {
       version = ">= 1.0.0, < 2.0.0"
-      source  = "github.com/hashicorp/google"
+      source  = "github.com/hashicorp/googlecompute"
     }
   }
 }
+
 
 variable "AWS_ACCESS_KEY" {
   type        = string
