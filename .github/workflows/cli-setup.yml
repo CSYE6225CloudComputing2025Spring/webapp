@@ -37,8 +37,6 @@ jobs:
       - name: Run tests
         run: npm test  
         
-      - name: Build application artifact
-        run: npm run build  
 
   image_build:
     runs-on: ubuntu-latest
@@ -70,6 +68,18 @@ jobs:
           service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY  }}
           export_default_credentials: true
 
+          
+          
+      - name: Run packer init
+        run: packer init machine-image.pkr.hcl
+        
+          
+      - name: Run packer fmt
+        run: packer fmt -check -diff machine-image.pkr.hcl
+          
+      - name: Run packer validate
+        run: packer validate machine-image.pkr.hcl
+          
       - name: Run Packer Build
         run: |
           if [ "${{ matrix.cloud }}" == "aws" ]; then
