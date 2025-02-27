@@ -1,0 +1,82 @@
+name: Use Packer To Build Custom Image
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  cli-test-artifact:
+    runs-on: ubuntu-latest
+
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up AWS Client Interface
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}
+          region: us-west-2
+
+      - name: Set up GCP Client Interface
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_ID }}
+          credentials_json: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Build application artifact
+        run: ./gradlew build
+
+  image_build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cloud: [aws, gcp]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Packer
+        run: |
+          if ! command -v packer &> /dev/null; then
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+            sudo apt update && sudo apt install -y packer
+          fi
+
+      - name: Set up AWS Client Interface
+        if: matrix.cloud == 'aws'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}
+          region: us-west-2
+
+      - name: Set up GCP Client Interface
+        if: matrix.cloud == 'gcp'
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_ID }}
+          credentials_json: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}
+
+      - name: Run Packer Build
+        run: |
+          if [ "${{ matrix.cloud }}" == "aws" ]; then
+            packer build -var "AWS_ACCESS_KEY=${{ secrets.AWS_DEV_ACCESS_KEY_ID }}" -var "AWS_SECRET_KEY=${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}" machine-image.pkr.hcl
+          else
+            packer build -var "GCP_CREDENTIALS=${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}" machine-image.pkr.hcl
+          fi
+
+
+
+
+
+          
+     
