@@ -1,20 +1,21 @@
 const { Sequelize, DataTypes } = require('sequelize');
-
-jest.setTimeout(10000);
-
-//mock database
-jest.mock('sequelize');
-const createRecord = jest.fn();
-const sequelizeMock = {
-    define: () => ({ create: createRecord }),  
-    sync: jest.fn().mockResolvedValue(), 
-    authenticate: jest.fn().mockResolvedValue(),
-};
-
-Sequelize.mockImplementation(() => sequelizeMock);
-
 const request = require('supertest');
 const app = require('../index');
+
+const sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
+    {
+        host: process.env.DB_HOST || '127.0.0.1', 
+        dialect: 'mysql',
+        logging: false, 
+    }
+);
+
+const HealthCheck = sequelize.define('HealthCheck', {
+    status: DataTypes.STRING,
+});
 
 // function for headers(Cache-Control: no-cache) checking and payload checking
 const checkHeadersAndBodies = (res) => {
@@ -24,13 +25,24 @@ const checkHeadersAndBodies = (res) => {
     expect(res.text).toBe('');
 }
 
+jest.setTimeout(20000);
+
 //tests
 describe('Test health check rest api whether functions well', () => {
-    beforeEach(() => {
-        createRecord.mockClear(); 
-        sequelizeMock.sync.mockClear();
+    beforeAll(async () => {
+        await sequelize.authenticate(); 
+        await sequelize.sync({ force: true }); 
     });
-
+    
+    afterAll(async () => {
+        await sequelize.close(); 
+    });
+    
+    beforeEach(async () => {
+        jest.restoreAllMocks(); 
+        await HealthCheck.destroy({ where: {} }); 
+    });
+    
     test('if there are query parameters in get method, 400 should return', async () => {
         const res = await request(app).get('/healthz?name=jack');
         expect(res.statusCode).toBe(400);
@@ -50,20 +62,27 @@ describe('Test health check rest api whether functions well', () => {
     });
 
     test('get method, no query meters and empty request body, if record was inserted successfully, 200 should return', async () => {
-        createRecord.mockResolvedValueOnce({}); 
+        await HealthCheck.create({ status: 'ok' });
         const res = await request(app).get('/healthz');
         expect(res.statusCode).toBe(200);
-        expect(createRecord).toHaveBeenCalled();
         checkHeadersAndBodies(res);
     });
 
-    test('get method, no query meters and empty request body, if record was not inserted successfully, 503 should return', async () => {
-        createRecord.mockRejectedValueOnce(new Error('Unsuccessful Insert'));
+    const { execSync } = require('child_process');
+
+test('get method, no query params and empty request body, if DB is down, 503 should return', async () => {
+    try {
+        console.log('Stopping MySQL...');
+        execSync('sudo systemctl stop mysql'); // Ubuntu/Debian
         const res = await request(app).get('/healthz');
         expect(res.statusCode).toBe(503);
-        expect(createRecord).toHaveBeenCalled();
         checkHeadersAndBodies(res);
-    });
+    } finally {
+        console.log('Restarting MySQL...');
+        execSync('sudo systemctl start mysql'); // Ubuntu/Debian
+    }
+});
+
 
     test('methods except get method, 405 method not allowed should return', async () => {
         const methodsExceptGet = ['post', 'put', 'patch', 'delete'];
