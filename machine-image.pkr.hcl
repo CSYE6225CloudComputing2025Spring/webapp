@@ -88,7 +88,7 @@ source "amazon-ebs" "my-aws-ami" {
 
   tags = {
     "Name" = "CSYE6225-App-Image"
-  }okokokoko
+  }
 }
 
 
