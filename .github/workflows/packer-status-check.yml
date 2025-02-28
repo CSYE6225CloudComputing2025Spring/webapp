@@ -1,0 +1,33 @@
+name: PR Format Check And Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  packer-format-validate-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Packer
+        run: |
+          wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install packer
+
+      - name: Run packer fmt check
+        run: |
+          if [[ $(packer fmt -check .) ]]; then
+            echo "Packer formatting is incorrect. Fix it before merging."
+            exit 1
+          fi
+
+      - name: Validate Packer template
+        run: |
+          if ! packer validate packer-template.pkr.hcl; then
+            echo "Packer validation failed. Fix errors before merging."
+            exit 1
+          fi
