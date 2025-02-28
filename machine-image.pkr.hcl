@@ -86,7 +86,7 @@ source "amazon-ebs" "my-aws-ami" {
     volume_type           = "gp2"
   }
 
-  tags = {
+  tags =                {
     "Name" = "CSYE6225-App-Image"
   }
 }

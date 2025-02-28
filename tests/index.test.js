@@ -39,6 +39,7 @@ describe('Test health check rest api whether functions well', () => {
     });
     
     beforeEach(async () => {
+        jest.restoreAllMocks(); 
         await HealthCheck.destroy({ where: {} }); 
     });
     
@@ -67,12 +68,21 @@ describe('Test health check rest api whether functions well', () => {
         checkHeadersAndBodies(res);
     });
 
-    test('get method, no query meters and empty request body, if record was not inserted successfully, 503 should return', async () => {
-        jest.spyOn(HealthCheck, 'create').mockRejectedValue(new Error('Unsuccessful Insert'));
+    const { execSync } = require('child_process');
+
+test('get method, no query params and empty request body, if DB is down, 503 should return', async () => {
+    try {
+        console.log('Stopping MySQL...');
+        execSync('sudo systemctl stop mysql'); // Ubuntu/Debian
         const res = await request(app).get('/healthz');
         expect(res.statusCode).toBe(503);
         checkHeadersAndBodies(res);
-    });
+    } finally {
+        console.log('Restarting MySQL...');
+        execSync('sudo systemctl start mysql'); // Ubuntu/Debian
+    }
+});
+
 
     test('methods except get method, 405 method not allowed should return', async () => {
         const methodsExceptGet = ['post', 'put', 'patch', 'delete'];

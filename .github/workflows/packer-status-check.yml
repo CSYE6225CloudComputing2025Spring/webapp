@@ -27,7 +27,7 @@ jobs:
 
       - name: Validate Packer template
         run: |
-          if ! packer validate packer-template.pkr.hcl; then
+          if ! packer validate packer-status-check.pkr.hcl; then
             echo "Packer validation failed. Fix errors before merging."
             exit 1
           fi
