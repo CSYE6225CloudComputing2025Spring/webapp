@@ -40,6 +40,13 @@ jobs:
 
   image_build:
     runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
     strategy:
       matrix:
         cloud: [aws, gcp]
@@ -77,17 +84,21 @@ jobs:
       - name: Run packer fmt
         run: packer fmt -check -diff machine-image.pkr.hcl
           
-      - name: Run packer validate
-        run: packer validate machine-image.pkr.hcl
-          
-      - name: Run Packer Build
+      - name: Validate Packer Template
         run: |
-          if [ "${{ matrix.cloud }}" == "aws" ]; then
-            packer build -var "AWS_ACCESS_KEY=${{ secrets.AWS_DEV_ACCESS_KEY_ID }}" -var "AWS_SECRET_KEY=${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}" machine-image.pkr.hcl
-          else
-            packer build -var "GCP_CREDENTIALS=${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}" machine-image.pkr.hcl
-          fi
+          packer validate \
+            -var "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" \
+            -var "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" \
+            -var "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+            machine-image.pkr.hcl
 
+      - name: Build Packer Image
+        run: |
+          packer build \
+            -var "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" \
+            -var "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" \
+            -var "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+            machine-image.pkr.hcl
 
 
 
