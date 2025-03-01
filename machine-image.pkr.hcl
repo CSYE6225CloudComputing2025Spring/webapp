@@ -22,7 +22,7 @@ variable "AWS_SECRET_KEY" {
   description = "AWS secret key for authentication"
 }
 
-variable "aws-region" {
+variable "aws_region" {
   type    = string
   default = "us-east-1"
 }
@@ -104,9 +104,7 @@ source "googlecompute" "my-gcp-image" {
   disk_type    = "pd-standard"
   machine_type = "n1-standard-1"
 
-  tags = {
-    "Name" = "CSYE6225-App-Image"
-  }
+  tags = ["CSYE6225-App-Image"]
 }
 
 build {
