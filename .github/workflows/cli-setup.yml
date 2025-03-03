@@ -7,37 +7,6 @@ on:
       - main
 
 jobs:
-  cli-test-artifact:
-    runs-on: ubuntu-latest
-
-    if: github.event.pull_request.merged == true
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up AWS Client Interface
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY  }}
-          export_default_credentials: true
-        
-      
-
-      - name: Install dependencies
-        run: npm install  
-        
-      - name: Run tests
-        run: npm test  
-        
-
   image_build:
     runs-on: ubuntu-latest
 
@@ -50,9 +19,22 @@ jobs:
     strategy:
       matrix:
         cloud: [aws, gcp]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: npm install --omit=dev  # Install production dependencies only
+
+      - name: Package Application
+        run: tar -czf app.tar.gz index.js package.json tests/
+
+      - name: Upload application artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: application-artifact
+          path: app.tar.gz
 
       - name: Install Packer
         run: |
@@ -70,38 +52,36 @@ jobs:
           aws-region: us-east-1
 
       - name: Setup Google Cloud SDK
+        if: matrix.cloud == 'gcp'
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY  }}
+          service_account_key: ${{ secrets.GCP_DEV_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
 
-          
-          
+      - name: Download application artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: application-artifact
+
+      - name: Extract application artifact
+        run: tar -xzf app.tar.gz -C .
+
       - name: Run packer init
         run: packer init machine-image.pkr.hcl
-        
-          
+
       - name: Run packer fmt
         run: packer fmt -check -diff machine-image.pkr.hcl
-          
+
       - name: Validate Packer Template
         run: |
           packer validate \
-            -var "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" \
-            -var "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" \
-            -var "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
-            machine-image.pkr.hcl
+          -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
+          -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+          machine-image.pkr.hcl
 
       - name: Build Packer Image
         run: |
           packer build \
-            -var "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" \
-            -var "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" \
-            -var "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
-            machine-image.pkr.hcl
-
-
-
-
-          
-     
+          -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
+          -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+          machine-image.pkr.hcl
