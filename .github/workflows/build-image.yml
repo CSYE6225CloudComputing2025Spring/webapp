@@ -9,12 +9,6 @@ jobs:
   image_build:
     runs-on: ubuntu-latest
 
-    env:
-      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-      AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
-      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-
     strategy:
       matrix:
         cloud: [aws, gcp]
