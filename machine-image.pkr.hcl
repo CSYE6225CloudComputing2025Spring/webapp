@@ -32,14 +32,14 @@ variable "subnet_id" { //used
 }
 
 source "amazon-ebs" "my-aws-ami" {
-  region          = var.aws_region
-  ami_name        = "csye6225_spring_2025_app_${formatdate("YYYY_MM_DD", timestamp())}"
+  region            = var.aws_region
+  ami_name          = "csye6225_spring_2025_app_${formatdate("YYYY_MM_DD", timestamp())}"
   launch_permission = []
-  ami_description = "AMI for CSYE 6225 Spring 2025"
-  instance_type   = "t2.small"
-  source_ami      = var.source_ami
-  ssh_username    = var.ssh_username
-  subnet_id       = var.subnet_id
+  ami_description   = "AMI for CSYE 6225 Spring 2025"
+  instance_type     = "t2.small"
+  source_ami        = var.source_ami
+  ssh_username      = var.ssh_username
+  subnet_id         = var.subnet_id
 
   launch_block_device_mappings {
     delete_on_termination = true
@@ -80,7 +80,7 @@ source "googlecompute" "my-gcp-image" {
   zone         = "${var.gcp_zone}"
   image_name   = "csye6225-spring-2025-app-${formatdate("YYYY-MM-DD", timestamp())}"
   image_family = "custom-ubuntu-application-image"
-  visibility  = "private"
+  visibility   = "private"
   source_image = "ubuntu-os-cloud/ubuntu-2404-lts"
   ssh_username = "${var.ssh_username}"
 
