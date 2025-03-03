@@ -1,0 +1,45 @@
+name: Packer CI
+
+on:
+    pull_request:
+      branches:
+        - main
+
+
+jobs:
+  packer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch Repository Code
+        uses: actions/checkout@v4
+
+      - name: Install Packer
+        run: |
+          if ! command -v packer &> /dev/null; then
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+            sudo apt update && sudo apt install -y packer
+          fi
+      
+
+      - name: Run packer init
+        run: packer init machine-image.pkr.hcl
+    
+      - name: Run Packer Format Check
+        run: |
+          packer fmt -diff -check .
+        continue-on-error: true
+
+      - name: Fail if Packer Format Modifies Files
+        run: |
+          if ! packer fmt -check .; then
+            echo "Packer fmt detected formatting issues. Please run 'packer fmt .' locally and commit the changes."
+            exit 1
+          fi
+  
+      - name: Validate Packer Template
+        run: |
+            packer validate \
+            -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
+            -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+            machine-image.pkr.hcl
