@@ -1,9 +1,10 @@
 name: Web App Tests Continuous Integration File
 
 on:
-  pull_request:
+  push:
     branches:
-      - main  
+      - main
+
 
 jobs:
   tests:
