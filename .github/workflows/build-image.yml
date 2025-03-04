@@ -23,11 +23,25 @@ jobs:
       - name: Package Application
         run: tar -czf app.tar.gz index.js package.json tests/
 
-      - name: Upload application artifact
+      - name: Check if artifact file exists before uploading
+        run: |
+          if [ -f "app.tar.gz" ]; then
+            echo "File app.tar.gz exists. Proceeding to upload."
+          else
+            echo "File app.tar.gz does not exist. Skipping upload."
+            exit 0
+          fi
+
+      - name: Upload application artifact (if exists)
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: application-artifact
           path: app.tar.gz
+
+
+
+
 
       - name: Install Packer
         run: |
