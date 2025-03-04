@@ -11,6 +11,11 @@ packer {
   }
 }
 
+variable "cloud" {
+  type    = string
+  default = ""
+}
+
 variable "aws_region" { //used
   type    = string
   default = "us-east-1"

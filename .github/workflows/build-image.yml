@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: npm install --omit=dev  # Install production dependencies only
+        run: npm install --omit=dev  
 
       - name: Package Application
         run: tar -czf app.tar.gz index.js package.json tests/
@@ -65,6 +65,7 @@ jobs:
       - name: Build Packer Image
         run: |
           packer build \
+          -var-file=variables.pkr.hcl \
           -var "cloud=${{ matrix.cloud }}" \
           -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
           -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
