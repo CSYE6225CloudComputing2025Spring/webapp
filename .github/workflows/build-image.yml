@@ -65,7 +65,6 @@ jobs:
       - name: Build Packer Image
         run: |
           packer build \
-          -var-file=variables.pkr.hcl \
           -var "cloud=${{ matrix.cloud }}" \
           -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
           -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
