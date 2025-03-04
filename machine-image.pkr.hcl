@@ -12,7 +12,7 @@ packer {
 }
 
 variable "cloud" {
-  type        = string
+  type    = string
   default = ""
 }
 
