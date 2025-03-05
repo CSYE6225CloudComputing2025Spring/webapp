@@ -84,9 +84,9 @@ source "googlecompute" "my-gcp-image" {
   project_id   = "${var.gcp_project_id}"
   zone         = "${var.gcp_zone}"
   image_name   = "csye6225-spring-2025-app-${formatdate("YYYY-MM-DD", timestamp())}"
-  image_family = "custom-ubuntu-application-image"
+  image_family = "ubuntu-2404-lts-arm64"
 
-  source_image = "ubuntu-os-cloud/ubuntu-2404-lts"
+  source_image = "ubuntu-2404-noble-arm64-v20250228"
   ssh_username = "${var.ssh_username}"
 
   disk_size    = 10
