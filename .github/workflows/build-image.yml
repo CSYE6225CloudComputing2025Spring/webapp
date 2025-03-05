@@ -70,6 +70,12 @@ jobs:
         if: matrix.cloud == 'gcp'
         uses: 'google-github-actions/setup-gcloud@v2'
 
+      - name: Check GCP Quotas
+        if: matrix.cloud == 'gcp'
+        run: |
+          gcloud compute project-info describe --format="json" | jq '.quotas[] | select(.metric == "IN_USE_ADDRESSES")'
+      
+
       - name: Download application artifact
         uses: actions/download-artifact@v4
         with:
