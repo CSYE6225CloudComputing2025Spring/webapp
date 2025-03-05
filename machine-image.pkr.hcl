@@ -93,7 +93,7 @@ source "googlecompute" "my-gcp-image" {
   disk_type    = "pd-standard"
   machine_type = "n1-standard-1"
 
-  tags = ["CSYE6225-App-Image"]
+  tags = ["csye6225-app-image"]
 }
 
 build {
