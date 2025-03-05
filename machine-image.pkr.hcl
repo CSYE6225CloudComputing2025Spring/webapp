@@ -120,7 +120,7 @@ build {
 
   provisioner "shell" {
     environment_vars = [
-      "DEBIAN_FRONTEND=noninteractive",
+      "export DEBIAN_FRONTEND=noninteractive",
       "MYSQL_DB_NAME=${var.MYSQL_DB_NAME}",
       "MYSQL_ROOT_PASSWORD=${var.MYSQL_ROOT_PASSWORD}"
     ]
@@ -157,7 +157,9 @@ build {
 
       "sudo systemctl daemon-reload",
       "sudo systemctl enable csye6225.service",
-      "sudo systemctl start csye6225.service"
+      "sudo systemctl start csye6225.service",
+      "sudo systemctl status csye6225.service",
+      "sudo journalctl -xeu csye6225.service"
     ]
   }
 
