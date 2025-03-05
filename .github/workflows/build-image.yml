@@ -82,13 +82,23 @@ jobs:
         run: packer init machine-image.pkr.hcl
 
       - name: Build Packer Image
+        if: matrix.cloud == 'aws'
         run: |
           packer build \
           -var "cloud=${{ matrix.cloud }}" \
           -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
           -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+          machine-image.pkr.hcl
+
+          
+  
+      - name: Build Packer Image for GCP
+        if: matrix.cloud == 'gcp'
+        run: |
+          packer build \
           -var "gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
           -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
+          -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           machine-image.pkr.hcl
   
   
