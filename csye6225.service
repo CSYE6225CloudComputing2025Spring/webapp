@@ -1,16 +1,20 @@
 [Unit]
-Description=CSYE 6225 App
-ConditionPathExists=/opt/application.properties
-After=network.target
+Description=CSYE 6225 Web Application
+ConditionPathExists=/opt/csye6225/.env  
+After=network.target mysql.service  
 
 [Service]
 Type=simple
 User=csye6225
 Group=csye6225
-WorkingDirectory=/opt/app
-ExecStart=/opt/app/healthcheck
+WorkingDirectory=/opt/csye6225
+EnvironmentFile=/opt/csye6225/.env  
+ExecStart=/usr/bin/node /opt/csye6225/index.js  
+
 Restart=always
-RestartSec=3
+RestartSec=5  
+LimitNOFILE=65536  
+
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=csye6225
