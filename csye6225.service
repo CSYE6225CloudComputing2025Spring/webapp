@@ -1,7 +1,7 @@
 [Unit]
 Description=CSYE 6225 Web Application
 ConditionPathExists=/opt/csye6225/.env  
-After=network.target mysql.service  
+After=network.target mysql.service  # wait for networking and MySQL
 
 [Service]
 Type=simple
