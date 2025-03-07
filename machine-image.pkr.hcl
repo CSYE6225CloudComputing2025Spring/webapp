@@ -67,7 +67,7 @@ variable "gcp_project_id" {
 
 variable "gcp_zone" {
   type    = string
-  default = "us-central1-a"
+  default = "us-east4-a"
 }
 
 variable "MYSQL_DB_NAME" {
