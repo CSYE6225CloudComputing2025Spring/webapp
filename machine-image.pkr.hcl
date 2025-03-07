@@ -142,8 +142,19 @@ build {
       "sudo mv /tmp/index.js /opt/csye6225/index.js",
       "sudo mv /tmp/package.json /opt/csye6225/package.json",
       "sudo mv /tmp/tests /opt/csye6225/tests",
+
+      "sudo bash -c 'echo DB_HOST=localhost > /opt/csye6225/.env'",
+      "sudo bash -c 'echo DB_PORT=3306 >> /opt/csye6225/.env'",
+      "sudo bash -c 'echo DB_USER=root >> /opt/csye6225/.env'",
+      "sudo bash -c 'echo DB_PASSWORD=1234Aa >> /opt/csye6225/.env'",
+      "sudo bash -c 'echo DB_NAME=cloud_computing >> /opt/csye6225/.env'",
+      "sudo bash -c 'echo DIALECT=mysql >> /opt/csye6225/.env'",
+      "sudo bash -c 'echo PORT=8080 >> /opt/csye6225/.env'",
+      "sudo bash -c 'echo NODE_ENV=development >> /opt/csye6225/.env'",
+
       "sudo chown -R csye6225:csye6225 /opt/csye6225",
       "sudo chmod -R 750 /opt/csye6225",
+      "sudo chmod 600 /opt/csye6225/.env",
 
       "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
