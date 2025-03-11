@@ -87,7 +87,7 @@ source "googlecompute" "my-gcp-image" {
   image_family = "ubuntu-2404-lts-arm64"
 
   source_image = "ubuntu-2404-noble-arm64-v20250228"
-  ssh_username = "${var.ssh_username}"
+  ssh_username = "packer"
 
   disk_size    = 10
   disk_type    = "pd-standard"
