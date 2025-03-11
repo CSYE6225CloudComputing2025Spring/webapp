@@ -155,7 +155,7 @@ build {
       "sudo chown -R csye6225:csye6225 /opt/csye6225",
       "sudo chmod -R 750 /opt/csye6225",
       "sudo chmod 600 /opt/csye6225/.env",
-      "cd /opt/csye6225 && sudo -u csye6225 npm install",
+      "sudo bash -c 'cd /opt/csye6225 && npm install --unsafe-perm=true --allow-root'",
 
       "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
