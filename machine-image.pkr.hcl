@@ -1,4 +1,4 @@
-yespacker {
+packer {
   required_plugins {
     amazon = {
       version = ">= 1.0.0, < 2.0.0"
@@ -155,9 +155,9 @@ build {
       "sudo chown -R csye6225:csye6225 /opt/csye6225",
       "sudo chmod -R 750 /opt/csye6225",
       "sudo chmod 600 /opt/csye6225/.env",
-      "sudo-i"
-      "cd /opt/csye6225"
-      "npm install dotnev"
+      "sudo -i",
+      "cd /opt/csye6225",
+      "npm install dotnev",
 
       "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
@@ -171,7 +171,7 @@ build {
 
       "sudo systemctl daemon-reload",
       "sudo systemctl enable csye6225.service",
-      "sudo systemctl start csye6225.service"
+      "sudo systemctl start csye6225.service",
       "systemctl status csye6225"
     ]
   }
