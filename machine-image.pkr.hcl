@@ -134,7 +134,6 @@ build {
       "sudo systemctl restart mysql",
       "sudo mysql -e \"ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${var.MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;\"",
       "sudo mysql -u root --password='${var.MYSQL_ROOT_PASSWORD}' -e \"CREATE DATABASE IF NOT EXISTS ${var.MYSQL_DB_NAME} DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;\"",
-
       "sudo groupadd csye6225",
       "sudo useradd -m -g csye6225 -s /usr/sbin/nologin csye6225",
       "sudo mkdir -p /opt/csye6225",
@@ -155,7 +154,8 @@ build {
       "sudo chown -R csye6225:csye6225 /opt/csye6225",
       "sudo chmod -R 750 /opt/csye6225",
       "sudo chmod 600 /opt/csye6225/.env",
-      "sudo bash -c 'cd /opt/csye6225 && npm install --unsafe-perm=true --allow-root'",
+      "sudo bash -c 'cd /opt/csye6225 && npm install dotenv --unsafe-perm=true --allow-root'",
+
 
       "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
@@ -168,8 +168,11 @@ build {
       "echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable csye6225.service",
-      "sudo systemctl start csye6225.service"
+      "sudo systemctl enable csye6225",
+      "sudo systemctl start csye6225",
+      "sudo systemctl status csye6225 --no-pager",
+      "sudo journalctl -u csye6225 --no-pager | tail -n 50"
+
     ]
   }
 
