@@ -78,7 +78,7 @@ variable "MYSQL_DB_NAME" {
 variable "MYSQL_ROOT_PASSWORD" {
   type    = string
   default = ""
-}
+         }
 
 source "googlecompute" "my-gcp-image" {
   project_id   = "${var.gcp_project_id}"
