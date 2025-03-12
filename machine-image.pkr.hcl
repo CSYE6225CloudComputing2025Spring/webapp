@@ -81,7 +81,7 @@ variable "MYSQL_ROOT_PASSWORD" {
 }
 
 source "googlecompute" "my-gcp-image" {
-  # project_id   = "${var.gcp_project_id}"
+  project_id   = "${var.gcp_project_id}"
   zone         = "${var.gcp_zone}"
   image_name   = "csye6225-spring-2025-app-${formatdate("YYYY-MM-DD", timestamp())}"
   image_family = "ubuntu-2404-lts-arm64"
