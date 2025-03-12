@@ -80,14 +80,23 @@ variable "MYSQL_ROOT_PASSWORD" {
   default = ""
 }
 
+variable "gcp_base_image_family" {
+ type    = string
+ default = "ubuntu-2404-lts-amd64"
+}
+variable "gcp_base_image_project" {
+ type    = list(string)
+ default = ["ubuntu-os-cloud"]
+}
+
 source "googlecompute" "my-gcp-image" {
   project_id   = "${var.gcp_project_id}"
   zone         = "${var.gcp_zone}"
   image_name   = "csye6225-spring-2025-app-${formatdate("YYYY-MM-DD", timestamp())}"
-  image_family = "ubuntu-2404-lts-arm64"
-
-  source_image = "ubuntu-2404-noble-arm64-v20250228"
-  ssh_username = "packer"
+  source_image_family     = var.gcp_base_image_family
+  source_image_project_id = var.gcp_base_image_project
+  source_image = "ubuntu-2404-noble-amd64-v20250228"
+  ssh_username = "ubuntu"
 
   disk_size    = 10
   disk_type    = "pd-standard"
