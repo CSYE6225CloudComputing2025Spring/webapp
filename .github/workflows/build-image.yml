@@ -96,16 +96,19 @@ jobs:
           -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
           -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           machine-image.pkr.hcl
-      
+
+      - name: Get AWS AMI ID
+        if: matrix.cloud == 'aws'
+        run: |
           AMI_ID=$(aws ec2 describe-images --owners self --query 'Images[-1].ImageId' --output text)
-          echo "Built AWS AMI: $AMI_ID"
-
-          aws ec2 modify-image-attribute --image-id $AMI_ID --launch-permission "Add=[{UserId='${{ secrets.DEMO_AWS_ACCOUNT_ID }}'}]" --region us-east-1
-          echo "AWS AMI Shared with DEMO Account"
-
-
-          
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
   
+      - name: Share AWS AMI with DEMO Account
+        if: matrix.cloud == 'aws'
+        run: |
+            aws ec2 modify-image-attribute --image-id $AMI_ID --launch-permission "Add=[{UserId='${{ secrets.DEMO_AWS_ACCOUNT_ID }}'}]" --region us-east-1
+            echo "AWS AMI Shared with DEMO Account"
+ 
       - name: Build Packer Image for GCP
         if: matrix.cloud == 'gcp'
         run: |
@@ -115,12 +118,6 @@ jobs:
           -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
           -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           machine-image.pkr.hcl
-
-          IMAGE_NAME=$(gcloud compute images list --sort-by=~creationTimestamp --limit=1 --filter="name~'csye6225'" --format="value(name)")
-          echo "Built GCP Image: $IMAGE_NAME"
-
-          gcloud compute images add-iam-policy-binding $IMAGE_NAME --project=${{ secrets.GCP_PROJECT_ID }} --member="user:${{ secrets.DEMO_GCP_USER_EMAIL }}" --role="roles/compute.imageUser"
-          echo "GCP Image Shared with DEMO Project"
       
   
   
