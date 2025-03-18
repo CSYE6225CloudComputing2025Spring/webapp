@@ -4,10 +4,6 @@ packer {
       version = ">= 1.0.0, < 2.0.0"
       source  = "github.com/hashicorp/amazon"
     }
-    googlecompute = {
-      version = ">= 1.0.0, < 2.0.0"
-      source  = "github.com/hashicorp/googlecompute"
-    }
   }
 }
 
@@ -58,18 +54,6 @@ source "amazon-ebs" "my-aws-ami" {
   }
 }
 
-
-
-variable "gcp_project_id" {
-  type    = string
-  default = "dev-gcp-github-actions"
-}
-
-variable "gcp_zone" {
-  type    = string
-  default = "us-east4-a"
-}
-
 variable "MYSQL_DB_NAME" {
   type    = string
   default = ""
@@ -80,36 +64,11 @@ variable "MYSQL_ROOT_PASSWORD" {
   default = ""
 }
 
-variable "gcp_base_image_family" {
-  type    = string
-  default = "ubuntu-2404-lts-amd64"
-}
-variable "gcp_base_image_project" {
-  type    = list(string)
-  default = ["ubuntu-os-cloud"]
-}
-
-source "googlecompute" "my-gcp-image" {
-  project_id              = "${var.gcp_project_id}"
-  zone                    = "${var.gcp_zone}"
-  image_name              = "csye6225-spring-2025-app-${formatdate("YYYY-MM-DD", timestamp())}"
-  source_image_family     = var.gcp_base_image_family
-  source_image_project_id = var.gcp_base_image_project
-  source_image            = "ubuntu-2404-noble-amd64-v20250228"
-  ssh_username            = "ubuntu"
-
-  disk_size    = 10
-  disk_type    = "pd-standard"
-  machine_type = "n1-standard-1"
-
-  tags = ["csye6225-app-image"]
-}
-
 build {
   name = "my-first-build"
   sources = [
     "source.amazon-ebs.my-aws-ami",
-    "source.googlecompute.my-gcp-image",
+
   ]
 
   provisioner "file" {
