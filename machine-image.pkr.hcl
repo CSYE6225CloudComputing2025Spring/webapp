@@ -125,9 +125,7 @@ build {
       "echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable csye6225",
-      "sudo systemctl status csye6225 --no-pager",
-      "sudo journalctl -u csye6225 --no-pager | tail -n 50"
+      "sudo systemctl enable csye6225"
 
     ]
   }
