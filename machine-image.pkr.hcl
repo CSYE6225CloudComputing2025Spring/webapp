@@ -82,8 +82,8 @@ build {
   }
 
   //provisioner "file" {
-    //source      = "./tests"
-    //destination = "/tmp/tests"
+  //source      = "./tests"
+  //destination = "/tmp/tests"
   //}
 
   provisioner "shell" {
