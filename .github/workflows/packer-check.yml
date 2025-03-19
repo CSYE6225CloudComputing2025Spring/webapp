@@ -38,5 +38,5 @@ jobs:
           fi
   
       - name: Validate Packer Template
-        run: packer build machine-image.pkr.hcl
+        run: packer validate machine-image.pkr.hcl
             
