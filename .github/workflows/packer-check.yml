@@ -38,8 +38,5 @@ jobs:
           fi
   
       - name: Validate Packer Template
-        run: |
-            packer validate \
-            -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
-            -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
-            machine-image.pkr.hcl
+        run: packer validate machine-image.pkr.hcl
+            
