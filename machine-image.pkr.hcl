@@ -54,15 +54,15 @@ source "amazon-ebs" "my-aws-ami" {
   }
 }
 
-variable "MYSQL_DB_NAME" {
-  type    = string
-  default = ""
-}
+//variable "MYSQL_DB_NAME" {
+//  type    = string
+//  default = ""
+//}
 
-variable "MYSQL_ROOT_PASSWORD" {
-  type    = string
-  default = ""
-}
+//variable "MYSQL_ROOT_PASSWORD" {
+//  type    = string
+//  default = ""
+//}
 
 build {
   name = "my-first-build"
@@ -81,41 +81,30 @@ build {
     destination = "/tmp/package.json"
   }
 
-  provisioner "file" {
-    source      = "./tests"
-    destination = "/tmp/tests"
-  }
+  //provisioner "file" {
+    //source      = "./tests"
+    //destination = "/tmp/tests"
+  //}
 
   provisioner "shell" {
     environment_vars = [
       "DEBIAN_FRONTEND=noninteractive",
-      "MYSQL_DB_NAME=${var.MYSQL_DB_NAME}",
-      "MYSQL_ROOT_PASSWORD=${var.MYSQL_ROOT_PASSWORD}"
+      //"MYSQL_DB_NAME=${var.MYSQL_DB_NAME}",
+      //"MYSQL_ROOT_PASSWORD=${var.MYSQL_ROOT_PASSWORD}"
     ]
     inline = [
       "sudo apt-get update && sudo apt-get upgrade -y",
-      "sudo apt-get install -y mysql-server nodejs npm",
+      "sudo apt-get install -y nodejs npm",
 
-      "sudo systemctl start mysql",
-      "sudo systemctl enable mysql",
-      "sudo sed -i 's/^bind-address.*/bind-address = 127.0.0.1/' /etc/mysql/mysql.conf.d/mysqld.cnf",
-      "sudo systemctl restart mysql",
-      "sudo mysql -e \"ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${var.MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;\"",
-      "sudo mysql -u root --password='${var.MYSQL_ROOT_PASSWORD}' -e \"CREATE DATABASE IF NOT EXISTS ${var.MYSQL_DB_NAME} DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;\"",
       "sudo groupadd csye6225",
       "sudo useradd -m -g csye6225 -s /usr/sbin/nologin csye6225",
       "sudo mkdir -p /opt/csye6225",
 
       "sudo mv /tmp/index.js /opt/csye6225/index.js",
       "sudo mv /tmp/package.json /opt/csye6225/package.json",
-      "sudo mv /tmp/tests /opt/csye6225/tests",
+      //"sudo mv /tmp/tests /opt/csye6225/tests",
 
-      "sudo bash -c 'echo DB_HOST=localhost > /opt/csye6225/.env'",
-      "sudo bash -c 'echo DB_PORT=3306 >> /opt/csye6225/.env'",
-      "sudo bash -c 'echo DB_USER=root >> /opt/csye6225/.env'",
-      "sudo bash -c 'echo DB_PASSWORD=1234Aa >> /opt/csye6225/.env'",
-      "sudo bash -c 'echo DB_NAME=cloud_computing >> /opt/csye6225/.env'",
-      "sudo bash -c 'echo DIALECT=mysql >> /opt/csye6225/.env'",
+      //"sudo bash -c 'echo DIALECT=mysql >> /opt/csye6225/.env'",
       "sudo bash -c 'echo PORT=8080 >> /opt/csye6225/.env'",
       "sudo bash -c 'echo NODE_ENV=development >> /opt/csye6225/.env'",
 
@@ -131,13 +120,12 @@ build {
       "echo 'Restart=always' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'User=csye6225' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'Group=csye6225' | sudo tee -a /etc/systemd/system/csye6225.service",
-      "echo 'EnvironmentFile=/opt/csye6225/.env' | sudo tee -a /etc/systemd/system/csye6225.service",
+      "echo 'EnvironmentFile=/etc/environment' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo '[Install]' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
       "sudo systemctl daemon-reload",
       "sudo systemctl enable csye6225",
-      "sudo systemctl start csye6225",
       "sudo systemctl status csye6225 --no-pager",
       "sudo journalctl -u csye6225 --no-pager | tail -n 50"
 

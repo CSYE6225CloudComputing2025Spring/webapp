@@ -21,7 +21,7 @@ jobs:
         run: npm install --omit=dev  
 
       - name: Package Application
-        run: tar -czf app.tar.gz index.js package.json tests/
+        run: tar -czf app.tar.gz index.js package.json
 
       - name: Check if artifact file exists before uploading
         run: |
@@ -75,8 +75,6 @@ jobs:
           packer build \
           -only=my-first-build.amazon-ebs.my-aws-ami \
           -var "cloud=${{ matrix.cloud }}" \
-          -var "MYSQL_DB_NAME=${{ secrets.MYSQL_DB_NAME }}" \
-          -var "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           machine-image.pkr.hcl
 
       - name: Get AWS AMI ID
