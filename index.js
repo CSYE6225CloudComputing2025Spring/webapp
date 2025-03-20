@@ -76,45 +76,38 @@ const File = sequelize.define('File', {
 });
 
 // s3 configuration
-const s3 = new S3Client({ region: AWS_REGION });
+const s3C = new S3Client({ region: AWS_REGION });
 const upload = multer({ storage: multer.memoryStorage() });
-
-// authentication 
-const authenticate = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    next();
-};
 
 app.get('/healthz', async (req, res) => {
     if (
-        (Object.keys(req.query).length > 0) ||
-        (req.body && Object.keys(req.body).length > 0) ||
-        (typeof req.body === 'string' && req.body.trim().length > 0)
+        (Object.keys(req.query).length > 0) ||// if there are query parameters
+        (req.body && Object.keys(req.body).length > 0) || // not empty req body
+        (typeof req.body === 'string' && req.body.trim().length > 0) // not empty req body
     ) {
+
         return res.status(400).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
         }).end();
+        
     }
 
     try {
-        await sequelize.authenticate();
-        try {
-            await HealthCheck.create({});
-        } catch (logError) {
-            console.warn('Failed to log health check, but DB is still available:', logError);
-        }
+        await HealthCheck.create({});
 
         res.set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
-        }).status(200).end();
+        });
+
+        return res.status(200).end();
     } catch (error) {
-        console.error('Database unavailable:', error);
-        res.status(503).set({
+        console.error('Can not insert record:', error);
+
+        return res.status(503).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
@@ -123,6 +116,7 @@ app.get('/healthz', async (req, res) => {
 });
 
 app.all('/healthz', (req, res) => {
+    // Only HTTP GET the method is supported by the /healthz endpoint. All other methods should return HTTP code for Method Not Allowed.
     if (req.method !== 'GET') {
         return res.status(405).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -130,12 +124,18 @@ app.all('/healthz', (req, res) => {
             'X-Content-Type-Options': 'nosniff'
         }).end();
     }
+   
 });
 
 
-// Upload file
-app.post('/v1/file', authenticate, upload.single('profilePic'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+// upload file post method
+app.post('/v1/file', upload.single('profilePic'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Bad Request because no file is uploaded' });
+
+    if (req.file.size === 0) {
+        return res.status(400).json({ error: 'Bad Request because file uploaded is empty' });
+    }
+
     const fileKey = `${Date.now()}-${req.file.originalname}`;
     const uploadParams = {
         Bucket: S3_BUCKET,
@@ -145,47 +145,47 @@ app.post('/v1/file', authenticate, upload.single('profilePic'), async (req, res)
     };
 
     try {
-        await s3.send(new PutObjectCommand(uploadParams));
+        await s3C.send(new PutObjectCommand(uploadParams));
         const fileRecord = await File.create({
             file_name: req.file.originalname,
             url: `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${fileKey}`
         });
         res.status(201).json(fileRecord);
     } catch (error) {
-        console.error("File upload failed:", error);
-        res.status(400).json({ error: 'File upload failed' });
+        console.error("file upload failure:", error);
+        res.status(400).json({ error: 'file upload failure' });
     }
 });
 
-// Unsupported HTTP methods return 405 Method Not Allowed
+// 405 method not allowed
 const unsupportedMethods = ['head', 'options', 'patch', 'put'];
 unsupportedMethods.forEach(method => {
     app[method]('/v1/file', (req, res) => {
-        res.status(405).json({ error: 'Method Not Allowed' });
+        res.status(405).json({ error: 'server responds with 405 Method Not Allowed' });
     });
 });
 
 ['head', 'options', 'patch', 'put', 'post'].forEach(method => {
     app[method]('/v1/file/:id', (req, res) => {
-        res.status(405).json({ error: 'Method Not Allowed' });
+        res.status(405).json({ error: 'server responds with 405 Method Not Allowed' });
     });
 });
 
-// Get all files - returns 400 Bad Request since it's not supported
+// v1 file get - 400 Bad Request if no id
 app.get('/v1/file', (req, res) => {
     res.status(400).json({ error: 'Bad Request' });
 });
 
-// Delete all files - returns 400 Bad Request since it's not supported
+// v1 file delete - 400 Bad Request if no id
 app.delete('/v1/file', (req, res) => {
     res.status(400).json({ error: 'Bad Request' });
 });
 
-// Get file metadata
-app.get('/v1/file/:id', authenticate, async (req, res) => {
+// get file metadata(as swagger described) containing url
+app.get('/v1/file/:id', async (req, res) => {
     try {
         const file = await File.findByPk(req.params.id);
-        if (!file) return res.status(404).json({ error: 'File not found' });
+        if (!file) return res.status(404).json({ error: 'Not found' });
         res.status(200).json({
             file_name: file.file_name,
             id: file.id,
@@ -197,16 +197,14 @@ app.get('/v1/file/:id', authenticate, async (req, res) => {
     }
 });
 
-// Delete file
-app.delete('/v1/file/:id', authenticate, async (req, res) => {
+// delete file
+app.delete('/v1/file/:id', async (req, res) => {
     const file = await File.findByPk(req.params.id);
-    if (!file) return res.status(404).json({ error: 'File not found' });
-
-    await s3.send(new DeleteObjectCommand({
+    if (!file) return res.status(404).json({ error: 'Not found' });
+    await s3C.send(new DeleteObjectCommand({
         Bucket: S3_BUCKET,
         Key: new URL(file.url).pathname.substring(1),
     }));
-
     await file.destroy();
     res.status(204).send();
 });
@@ -214,8 +212,8 @@ app.delete('/v1/file/:id', authenticate, async (req, res) => {
 sequelize.authenticate()
     .then(() => sequelize.sync())
     .then(() => {
-        app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+        app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
     })
-    .catch(err => console.error('Database connection error:', err));
+    .catch(err => console.error('Error in database connection:', err));
 
 module.exports = app;
