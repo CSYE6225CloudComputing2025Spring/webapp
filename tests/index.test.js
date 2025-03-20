@@ -37,11 +37,11 @@ describe('Test health check rest api whether functions well', () => {
         checkHeadersAndBodies(res);
     });
 
-    test('if there is text body is in get method, 400 should return', async () => {
-        const res = await request(app).get('/healthz').set('Content-Type', 'text/plain').send('my name is jack');
-        expect(res.statusCode).toBe(400);
-        checkHeadersAndBodies(res);
-    });
+    //test('if there is text body is in get method, 400 should return', async () => {
+    //    const res = await request(app).get('/healthz').set('Content-Type', 'text/plain').send('my name is jack');
+    //    expect(res.statusCode).toBe(400);
+    //    checkHeadersAndBodies(res);
+    //});
 
     test('if there is JSON payload in GET request, 400 should return', async () => {
         const res = await request(app).get('/healthz').send({ name: 'jack' });

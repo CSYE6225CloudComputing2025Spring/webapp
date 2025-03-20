@@ -1,0 +1,50 @@
+name: Web App Tests Continuous Integration File
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 1234Aa
+          MYSQL_DATABASE: cloud_computing
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -p1234Aa" --health-interval=10s --health-timeout=6s --health-retries=6
+
+    steps:
+      - name: Fetch Repository Code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20  
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Wait for MySQL to be ready
+        run: |
+          retries=35
+          until mysql -h 127.0.0.1 -u root -p1234Aa -e "USE cloud_computing" &> /dev/null; do
+            ((retries--))
+            if [ "$retries" -le 0 ]; then
+              echo "MySQL could not start."
+              exit 1
+            fi
+            echo "Waiting for MySQL"
+            sleep 2
+          done
+          echo "MySQL is running."
+
+      - name: Run Test Suites
+        run: npm test
