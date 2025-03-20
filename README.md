@@ -1,7 +1,7 @@
 # Health Check REST API Introduction
 
 
-# Project Overview
+# Project overview
 This is a backend API-only web application designed to be deployed to cloud. It provides a Health Check API (`/healthz`), ensuring the database connection is active. 
 
 # Prerequisites for building and deploying your application locally:
