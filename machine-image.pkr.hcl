@@ -32,6 +32,21 @@ variable "subnet_id" { //used
   default = "subnet-02d16bca0e034eea1"
 }
 
+variable "demo_aws_account_id" {
+  type    = string
+  default = "831926604241"
+}
+
+variable "demo_gcp_project_id" {
+  type    = string
+  default = "quick-guru-454100-b1"
+}
+
+variable "demo_gcp_user_email" {
+  type    = string
+  default = "demo-image-access@quick-guru-454100-b1.iam.gserviceaccount.com"
+}
+
 source "amazon-ebs" "my-aws-ami" {
   region   = var.aws_region
   ami_name = "csye6225_spring_2025_app_${formatdate("YYYY_MM_DD", timestamp())}"
@@ -127,6 +142,16 @@ build {
       "sudo systemctl daemon-reload",
       "sudo systemctl enable csye6225"
 
+    ]
+  }
+
+  post-processor "shell-local" {
+    inline = [
+      # aws share ami
+      "aws ec2 modify-image-attribute --image-id ${self.output_ami_id} --launch-permission \"Add=[{UserId='${var.demo_aws_account_id}'}]\" --region ${var.aws_region}",
+      
+      # gcp share image
+      "gcloud compute images add-iam-policy-binding ${self.image_name} --project=${var.gcp_project_id} --member='user:${var.demo_gcp_user_email}' --role='roles/compute.imageUser'"
     ]
   }
 
