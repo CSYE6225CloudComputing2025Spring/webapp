@@ -102,7 +102,7 @@ build {
       "sudo apt-get update && sudo apt-get upgrade -y",
       "sudo apt-get install -y nodejs npm",
       //第六次作业    
-      "sudo apt install amazon-cloudwatch-agent"
+      "sudo apt install amazon-cloudwatch-agent",
 
       "sudo groupadd csye6225",
       "sudo useradd -m -g csye6225 -s /usr/sbin/nologin csye6225",
