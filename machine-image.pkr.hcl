@@ -87,16 +87,11 @@ build {
   //}
 
   //第六次作业
-  provisioner "shell" {
-    inline = [
-      "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc"
-    ]
-  }
-
   provisioner "file" {
     source      = "./amazon-cloudwatch-agent.json"
-    destination = "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+    destination = "/tmp/amazon-cloudwatch-agent.json"
   }
+
 
   provisioner "shell" {
     environment_vars = [
@@ -142,6 +137,10 @@ build {
 
       "sudo systemctl daemon-reload",
       "sudo systemctl enable csye6225",
+
+      # 创建 CloudWatch 目录并移动配置文件
+      "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
+      "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
 
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s"
 
