@@ -103,7 +103,14 @@ build {
       "sudo apt-get update && sudo apt-get upgrade -y",
       "sudo apt-get install -y nodejs npm",
       //第六次作业    
-      "sudo apt install amazon-cloudwatch-agent",
+
+      "wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
+
+      "sudo dpkg -i amazon-cloudwatch-agent.deb",
+
+
+      "rm amazon-cloudwatch-agent.deb",
+
 
       "sudo groupadd csye6225",
       "sudo useradd -m -g csye6225 -s /usr/sbin/nologin csye6225",
