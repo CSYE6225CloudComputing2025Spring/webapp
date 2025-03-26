@@ -86,6 +86,12 @@ build {
   //destination = "/tmp/tests"
   //}
 
+  //第六次作业
+  provisioner "file" {
+  source      = "./amazon-cloudwatch-agent.json"
+  destination = "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+  }
+
   provisioner "shell" {
     environment_vars = [
       "DEBIAN_FRONTEND=noninteractive",
@@ -95,10 +101,14 @@ build {
     inline = [
       "sudo apt-get update && sudo apt-get upgrade -y",
       "sudo apt-get install -y nodejs npm",
+      //第六次作业    
+      "sudo apt install amazon-cloudwatch-agent"
 
       "sudo groupadd csye6225",
       "sudo useradd -m -g csye6225 -s /usr/sbin/nologin csye6225",
-      "sudo mkdir -p /opt/csye6225",
+      //
+      "sudo mkdir -p /opt/csye6225/logs",
+      //
 
       "sudo mv /tmp/index.js /opt/csye6225/index.js",
       "sudo mv /tmp/package.json /opt/csye6225/package.json",
@@ -126,6 +136,14 @@ build {
 
       "sudo systemctl daemon-reload",
       "sudo systemctl enable csye6225"
+
+      "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+                  -a fetch-config \
+                  -m ec2 \
+                  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+                  -s"
+
+      
 
     ]
   }
