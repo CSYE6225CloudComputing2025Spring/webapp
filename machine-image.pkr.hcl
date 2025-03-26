@@ -129,7 +129,7 @@ build {
       "sudo chown -R csye6225:csye6225 /opt/csye6225",
       "sudo chmod -R 750 /opt/csye6225",
       "sudo chmod 600 /opt/csye6225/.env",
-      "sudo bash -c 'cd /opt/csye6225 && npm install dotenv --unsafe-perm=true --allow-root'",
+      "sudo bash -c 'cd /opt/csye6225 && npm install dotenv hot-shots winston --unsafe-perm=true --allow-root'",
 
 
       "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
