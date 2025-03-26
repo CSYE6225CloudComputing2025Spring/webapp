@@ -88,8 +88,8 @@ build {
 
   //第六次作业
   provisioner "file" {
-  source      = "./amazon-cloudwatch-agent.json"
-  destination = "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+    source      = "./amazon-cloudwatch-agent.json"
+    destination = "/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
   }
 
   provisioner "shell" {
@@ -140,7 +140,7 @@ build {
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s"
 
 
-      
+
 
     ]
   }
