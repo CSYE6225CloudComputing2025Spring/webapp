@@ -135,7 +135,7 @@ build {
       "echo 'Description=CSYE6225 Web Application' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'After=network.target cloud-init.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
-      "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
+      "echo '[Service]' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'WorkingDirectory=/opt/csye6225' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'Restart=always' | sudo tee -a /etc/systemd/system/csye6225.service",
