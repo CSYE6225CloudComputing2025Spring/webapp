@@ -131,6 +131,9 @@ build {
       "sudo chmod 600 /opt/csye6225/.env",
       "sudo bash -c 'cd /opt/csye6225 && npm install dotenv hot-shots winston --unsafe-perm=true --allow-root'",
 
+      "echo '[Unit]' | sudo tee /etc/systemd/system/csye6225.service",
+      "echo 'Description=CSYE6225 Web Application' | sudo tee -a /etc/systemd/system/csye6225.service",
+      "echo 'After=network.target cloud-init.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
       "echo '[Service]' | sudo tee /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
