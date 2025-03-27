@@ -4,7 +4,6 @@ const fs = require('fs');
 const multer = require('multer'); // a middleware to handle file uploads
 const { Sequelize, DataTypes } = require('sequelize');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-//第六次作业
 const StatsD = require('hot-shots');
 const winston = require('winston');
 const path = require('path');
@@ -20,20 +19,16 @@ const logger = winston.createLogger({
         timestamp(),
         printf(info => `${info.timestamp} - ${info.level}: ${info.message}`)
     ),
-    //文件名
     transports: [new winston.transports.File({ filename: path.join(logDir, 'app.log') }),
-    //
     new winston.transports.Console() ]
 });
 
-// ========== Metrics setup ==========
 const statsdtool = new StatsD({
     host: 'localhost',
     port: 8125,
     prefix: 'webapp.',
     errorHandler: (err) => logger.error('StatsD error:', err)
 });
-//
 
 const app = express();
 app.use(express.json());
@@ -109,55 +104,42 @@ const File = sequelize.define('File', {
 const s3C = new S3Client({ region: AWS_REGION });
 const upload = multer({ storage: multer.memoryStorage() });
 
-//看到这，再考虑要不中间件写所有
+
 app.use((req, res, next) => {
     res.on('finish', () => {
         const logMsg = `${req.method} ${req.url} ${res.statusCode}`;
-        if (res.statusCode >= 500) {
-            logger.error(logMsg);
-        } else if (res.statusCode >= 400) {
-            logger.warn(logMsg);
-        } else {
+        if (res.statusCode < 400) {
             logger.info(logMsg);
         }
     });
     next();
 });
 
-//
-
 app.get('/healthz', async (req, res) => {
-    //
     const start = Date.now();
-    statsdtool.increment('api.healthz.call');   //这个命名不是固定的，但是就是小写加两个点
-    //
+    statsdtool.increment('api.healthz.get.call_times');   
     if (
         (Object.keys(req.query).length > 0) ||// if there are query parameters
         (req.body && Object.keys(req.body).length > 0) || // not empty req body
         (typeof req.body === 'string' && req.body.trim().length > 0) // not empty req body
     ) {
-        //
-        statsdtool.timing('api.healthz.response_time', Date.now() - start);
-        //
+        statsdtool.timing('api.healthz.get.process_duration', Date.now() - start);
 
-        return res.status(400).set({
+        res.status(400).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
         }).end();
+        logger.warn(`${req.method} ${req.url} ${res.statusCode}`);
+        return; 
 
     }
 
     try {
-        //
         const dbStart = Date.now();
-        //
         await HealthCheck.create({});
-        //
-        statsdtool.timing('api.healthz.db_time', Date.now() - dbStart);
-
-        statsdtool.timing('api.healthz.response_time', Date.now() - start);
-        //
+        statsdtool.timing('api.healthz.db_duration', Date.now() - dbStart);
+        statsdtool.timing('api.healthz.get.process_duration', Date.now() - start);
         res.set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
@@ -166,30 +148,31 @@ app.get('/healthz', async (req, res) => {
 
         return res.status(200).end();
     } catch (error) {
-        //
-        logger.error(`${req.method} ${req.url} ${res.statusCode} could not insert health record`, error);
-        statsdtool.timing('api.healthz.response_time', Date.now() - start);
-        //
-        return res.status(503).set({
+        statsdtool.timing('api.healthz.get.process_duration', Date.now() - start);
+        res.status(503).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
         }).end();
+        logger.error(`${req.method} ${req.url} ${res.statusCode} could not insert health record`, error);
+        return;
     }
 });
 
 app.all('/healthz', (req, res) => {
     // Only HTTP GET the method is supported by the /healthz endpoint. All other methods should return HTTP code for Method Not Allowed.
+    const start = Date.now();
     if (req.method !== 'GET') {
-        //
-        logger.warn(`${req.method} ${req.url} ${res.statusCode} method not allowed`);
-        statsdtool.increment('api.healthz.invalid_method');
-        //
-        return res.status(405).set({
+        statsdtool.increment('api.healthz.not_allowed_method.call_times');
+    
+        res.status(405).set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'X-Content-Type-Options': 'nosniff'
         }).end();
+        statsdtool.timing('api.healthz.not_allowed_method.process_duration', Date.now() - start);
+        logger.warn(`${req.method} ${req.url} ${res.statusCode} method not allowed`);
+        return;
     }
 
 });
@@ -197,18 +180,19 @@ app.all('/healthz', (req, res) => {
 
 // upload file post method
 app.post('/v1/file', upload.single('profilePic'), async (req, res) => {
-    //
+    
     const start = Date.now();
-    statsdtool.increment('api.upload.call');
+    statsdtool.increment('api.file.post.call_times');
 
     if (!req.file || req.file.size === 0) {
-        //
+        
+        statsdtool.timing('api.file.post.process_duration', Date.now() - start);
+        
+        res.status(400).json({ error: 'Bad request because no file is uploaded or the uploaded file is empty' });
         logger.warn(`${req.method} ${req.url} ${res.statusCode} no file uploaded or empty file`);
-        statsdtool.timing('api.upload.response_time', Date.now() - start);
-        //
-        return res.status(400).json({ error: 'Bad request because no file is uploaded or the uploaded file is empty' });
+        return;
     }
-    //
+    
     const fileKey = `${Date.now()}-${req.file.originalname}`;
     const uploadParams = {
         Bucket: S3_BUCKET,
@@ -218,29 +202,29 @@ app.post('/v1/file', upload.single('profilePic'), async (req, res) => {
     };
 
     try {
-        //
+        
         const s3Start = Date.now();
-        //
+        
         await s3C.send(new PutObjectCommand(uploadParams));
-        //
-        statsdtool.timing('api.upload.s3_time', Date.now() - s3Start);
+        
+        statsdtool.timing('api.s3_duration', Date.now() - s3Start);
         const dbStart = Date.now();
-        //
+        
         const fileRecord = await File.create({
             file_name: req.file.originalname,
             url: `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${fileKey}`
         });
-        //
-        statsdtool.timing('api.upload.db_time', Date.now() - dbStart);
-        statsdtool.timing('api.upload.response_time', Date.now() - start);
-        //
+        
+        statsdtool.timing('api.file.post.db_duration', Date.now() - dbStart);
+        statsdtool.timing('api.file.post.process_duration', Date.now() - start);
+        
         res.status(201).json(fileRecord);
     } catch (error) {
-        //
-        logger.error('Upload failed:', error);
-        statsdtool.timing('api.upload.response_time', Date.now() - start);
-        //
+        
+        statsdtool.timing('api.file.post.process_duration', Date.now() - start);
+        
         res.status(400).json({ error: 'file upload failure' });
+        logger.error(`${req.method} ${req.url} ${res.statusCode} file upload failure`, error);
     }
 });
 
@@ -248,59 +232,72 @@ app.post('/v1/file', upload.single('profilePic'), async (req, res) => {
 const unsupportedMethods = ['head', 'options', 'patch', 'put'];
 unsupportedMethods.forEach(method => {
     app[method]('/v1/file', (req, res) => {
-        //
-        logger.warn(`405 Method Not Allowed: ${method.toUpperCase()} /v1/file`);
-        statsdtool.increment('api.file.unsupported_method');
-        //
+        
+        const start = Date.now();
+        statsdtool.increment('api.file.not_allowed_method.call_times');
+        
         res.status(405).json({ error: 'server responds with 405 Method Not Allowed' });
+        statsdtool.timing('api.file.not_allowed_method.process_duration', Date.now() - start);
+        logger.warn(`${req.method} ${req.url} ${res.statusCode} method not allowed`);
     });
 });
 
 ['head', 'options', 'patch', 'put', 'post'].forEach(method => {
     app[method]('/v1/file/:id', (req, res) => {
-        //
-        logger.warn(`405 Method Not Allowed: ${method.toUpperCase()} /v1/file/:id`);
-        statsdtool.increment('api.file.id.unsupported_method');
-        //
+        
+        const start = Date.now();
+        statsdtool.increment('api.file.id.not_allowed_method.call_times');
+        
         res.status(405).json({ error: 'server responds with 405 Method Not Allowed' });
+        statsdtool.timing('api.file.id.not_allowed_method.process_duration', Date.now() - start);
+        logger.warn(`${req.method} ${req.url} ${res.statusCode} method not allowed`);
     });
 });
 
 // v1 file get - 400 Bad Request if no id
 app.get('/v1/file', (req, res) => {
+    const start = Date.now();
+    statsdtool.increment('api.file.get.call_times');
+
     res.status(400).json({ error: 'Bad Request' });
+    statsdtool.timing('api.file.get.process_duration', Date.now() - start);
+    logger.warn(`${req.method} ${req.url} ${res.statusCode}`);
 });
 
 // v1 file delete - 400 Bad Request if no id
 app.delete('/v1/file', (req, res) => {
+    const start = Date.now();
+    statsdtool.increment('api.file.delete.call_times');
     res.status(400).json({ error: 'Bad Request' });
+    statsdtool.timing('api.file.delete.process_duration', Date.now() - start);
+    logger.warn(`${req.method} ${req.url} ${res.statusCode}`);
 });
 
 // get file metadata(as swagger described) containing url
 app.get('/v1/file/:id', async (req, res) => {
-    //
+    
     const start = Date.now();
-    statsdtool.increment('api.get_file.call');
-    logger.info(`GET /v1/file/${req.params.id}`);
+    statsdtool.increment('api.file.id.get.call_times');
 
     const dbStart = Date.now();
-    //
 
     const file = await File.findByPk(req.params.id);
-    //
-    statsdtool.timing('api.get_file.db_time', Date.now() - dbStart);
-    //
-    if (!file) {
-        //
-        logger.warn(`404 Not Found: File with id ${req.params.id}`);
-        statsdtool.timing('api.get_file.response_time', Date.now() - start);
-        //
 
-        return res.status(404).json({ error: 'Not found' });
+    statsdtool.timing('api.file.id.get.db_duration', Date.now() - dbStart);
+    
+    if (!file) {
+        
+        statsdtool.timing('api.file.id.get.process_duration', Date.now() - start);
+        
+
+        res.status(404).json({ error: 'Not found' });
+        logger.warn(`${req.method} ${req.url} ${res.statusCode}`);
+        return;
+        
     }
-    //
-    statsdtool.timing('api.get_file.response_time', Date.now() - start);
-    //
+    
+    statsdtool.timing('api.file.id.get.process_duration', Date.now() - start);
+    
     res.status(200).json({
         file_name: file.file_name,
         id: file.id,
@@ -312,38 +309,38 @@ app.get('/v1/file/:id', async (req, res) => {
 
 // delete file
 app.delete('/v1/file/:id', async (req, res) => {
-    //
+    
     const start = Date.now();
-    statsdtool.increment('api.delete_file.call');
+    statsdtool.increment('api.file.id.delete.call_times');
     logger.info(`DELETE /v1/file/${req.params.id}`);
 
     const dbStart = Date.now();
-    //
+    
     const file = await File.findByPk(req.params.id);
-    //
-    statsdtool.timing('api.delete_file.db_time', Date.now() - dbStart);
-    //
+    
+    statsdtool.timing('api.file.id.delete.db_duration', Date.now() - dbStart);
+    
     if (!file) {
-        //
-        logger.warn(`404 Not Found: File with id ${req.params.id}`);
-        statsdtool.timing('api.delete_file.response_time', Date.now() - start);
-        //
-        return res.status(404).json({ error: 'Not found' });
+        statsdtool.timing('api.file.id.delete.process_duration', Date.now() - start);
+        
+        res.status(404).json({ error: 'Not found' });
+        logger.warn(`${req.method} ${req.url} ${res.statusCode}`);
+        return;
     }
-    //
+    
     const s3Start = Date.now();
-    //
+    
     await s3C.send(new DeleteObjectCommand({
         Bucket: S3_BUCKET,
         Key: new URL(file.url).pathname.substring(1),
     }));
-    //
-    statsdtool.timing('api.delete_file.s3_time', Date.now() - s3Start);
-    //
+    
+    statsdtool.timing('api.s3_duration', Date.now() - s3Start);
+    
     await file.destroy();
-    //
-    statsdtool.timing('api.delete_file.response_time', Date.now() - start);
-    //
+    
+    statsdtool.timing('api.file.id.delete.process_duration', Date.now() - start);
+    
     res.status(204).send();
 });
 

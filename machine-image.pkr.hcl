@@ -102,7 +102,7 @@ build {
     inline = [
       "sudo apt-get update && sudo apt-get upgrade -y",
       "sudo apt-get install -y nodejs npm",
-      //第六次作业    
+          
 
       "wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
 
@@ -143,9 +143,9 @@ build {
       "echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable csye6225",
 
-      # 创建 CloudWatch 目录并移动配置文件
+
+      
       "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
       "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
 
