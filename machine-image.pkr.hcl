@@ -102,7 +102,7 @@ build {
     inline = [
       "sudo apt-get update && sudo apt-get upgrade -y",
       "sudo apt-get install -y nodejs npm",
-          
+
 
       "wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
 
@@ -145,7 +145,7 @@ build {
       "sudo systemctl daemon-reload",
 
 
-      
+
       "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
       "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
 
