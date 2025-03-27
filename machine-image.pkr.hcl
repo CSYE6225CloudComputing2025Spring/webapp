@@ -143,6 +143,7 @@ build {
       "echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
       "sudo systemctl daemon-reload",
+      "sudo systemctl enable csye6225",
 
 
 
