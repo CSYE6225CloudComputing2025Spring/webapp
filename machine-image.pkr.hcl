@@ -133,7 +133,10 @@ build {
 
       "echo '[Unit]' | sudo tee /etc/systemd/system/csye6225.service",
       "echo 'Description=CSYE6225 Web Application' | sudo tee -a /etc/systemd/system/csye6225.service",
-      "echo 'After=network.target cloud-init.target' | sudo tee -a /etc/systemd/system/csye6225.service",
+      "echo 'After=network.target' | sudo tee -a /etc/systemd/system/csye6225.service",
+
+      "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
+      "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
 
       "echo '[Service]' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'ExecStart=/usr/bin/node /opt/csye6225/index.js' | sudo tee -a /etc/systemd/system/csye6225.service",
@@ -145,15 +148,12 @@ build {
       "echo '[Install]' | sudo tee -a /etc/systemd/system/csye6225.service",
       "echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/csye6225.service",
 
+
+
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable csye6225",
+      "sudo systemctl enable csye6225"
 
 
-
-      "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
-      "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
-
-      "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s"
 
 
 
