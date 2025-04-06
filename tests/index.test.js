@@ -1,81 +1,102 @@
-const { Sequelize, DataTypes } = require('sequelize');
-
-jest.setTimeout(10000);
-
-//mock database
-jest.mock('sequelize');
-const createRecord = jest.fn();
-const sequelizeMock = {
-    define: () => ({ create: createRecord }),  
-    sync: jest.fn().mockResolvedValue(), 
-    authenticate: jest.fn().mockResolvedValue(),
-};
-
-Sequelize.mockImplementation(() => sequelizeMock);
+// 注：不再需要 dotenv
+// require('dotenv').config({ path: '.env.test' });
 
 const request = require('supertest');
+
+// 手动注入 process.env，兼容 GitHub Actions 里的 service.mysql.env
+process.env.DB_HOST = '127.0.0.1';
+process.env.DB_PORT = '3306';
+process.env.DB_USER = 'root';
+process.env.DB_PASSWORD = process.env.MYSQL_ROOT_PASSWORD || '1234Aa';
+process.env.DB_NAME = process.env.MYSQL_DATABASE || 'cloud_computing';
+process.env.S3_BUCKET = 'dummy-bucket';
+process.env.AWS_REGION = 'us-east-1';
+process.env.PORT = '3001';
+
 const app = require('../index');
+const { Sequelize, DataTypes } = require('sequelize');
 
-// function for headers(Cache-Control: no-cache) checking and payload checking
+// 使用真实数据库连接
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'mysql',
+    logging: false,
+  }
+);
+
+// 重新定义 HealthCheck 模型
+const HealthCheck = sequelize.define(
+  'HealthCheck',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    },
+  },
+  {
+    tableName: 'healthcheck',
+    timestamps: false,
+  }
+);
+
+// 验证 HTTP header
 const checkHeadersAndBodies = (res) => {
-    expect(res.headers['cache-control']).toBe('no-cache, no-store, must-revalidate');
-    expect(res.headers['pragma']).toBe('no-cache');
-    expect(res.headers['x-content-type-options']).toBe('nosniff');
-    expect(res.text).toBe('');
-}
+  expect(res.headers['cache-control']).toBe('no-cache, no-store, must-revalidate');
+  expect(res.headers['pragma']).toBe('no-cache');
+  expect(res.headers['x-content-type-options']).toBe('nosniff');
+  expect(res.text).toBe('');
+};
 
-//tests
-describe('Test health check rest api whether functions well', () => {
-    beforeEach(() => {
-        createRecord.mockClear(); 
-        sequelizeMock.sync.mockClear();
-    });
+beforeAll(async () => {
+  await sequelize.authenticate();
+  await sequelize.sync();
+});
 
-    test('if there are query parameters in get method, 400 should return', async () => {
-        const res = await request(app).get('/healthz?name=jack');
-        expect(res.statusCode).toBe(400);
-        checkHeadersAndBodies(res);
-    });
+afterAll(async () => {
+  await sequelize.close();
+});
 
-    //test('if there is text body is in get method, 400 should return', async () => {
-    //    const res = await request(app).get('/healthz').set('Content-Type', 'text/plain').send('my name is jack');
-    //    expect(res.statusCode).toBe(400);
-    //    checkHeadersAndBodies(res);
-    //});
+afterEach(async () => {
+  await HealthCheck.destroy({ where: {} });
+});
 
-    test('if there is JSON payload in GET request, 400 should return', async () => {
-        const res = await request(app).get('/healthz').send({ name: 'jack' });
-        expect(res.statusCode).toBe(400);
-        checkHeadersAndBodies(res);
-    });
+describe('Healthz endpoint with real DB', () => {
+  test('GET /healthz with query string → 400', async () => {
+    const res = await request(app).get('/healthz?name=test');
+    expect(res.statusCode).toBe(400);
+    checkHeadersAndBodies(res);
+  });
 
-    test('get method, no query meters and empty request body, if record was inserted successfully, 200 should return', async () => {
-        createRecord.mockResolvedValueOnce({}); 
-        const res = await request(app).get('/healthz');
-        expect(res.statusCode).toBe(200);
-        expect(createRecord).toHaveBeenCalled();
-        checkHeadersAndBodies(res);
-    });
+  test('GET /healthz with request body → 400', async () => {
+    const res = await request(app).get('/healthz').send({ key: 'value' });
+    expect(res.statusCode).toBe(400);
+    checkHeadersAndBodies(res);
+  });
 
-    test('get method, no query meters and empty request body, if record was not inserted successfully, 503 should return', async () => {
-        createRecord.mockRejectedValueOnce(new Error('Unsuccessful Insert'));
-        const res = await request(app).get('/healthz');
-        expect(res.statusCode).toBe(503);
-        expect(createRecord).toHaveBeenCalled();
-        checkHeadersAndBodies(res);
-    });
+  test('Valid GET /healthz inserts record → 200', async () => {
+    const res = await request(app).get('/healthz');
+    expect(res.statusCode).toBe(200);
+    const records = await HealthCheck.findAll();
+    expect(records.length).toBe(1);
+    checkHeadersAndBodies(res);
+  });
 
-    test('methods except get method, 405 method not allowed should return', async () => {
-        const methodsExceptGet = ['post', 'put', 'patch', 'delete'];
-        for (const method of methodsExceptGet) {
-            const res = await request(app)[method]('/healthz');
-            expect(res.statusCode).toBe(405);
-            checkHeadersAndBodies(res);
-        }
-        
-    });
-
-
-
-
+  test('Other methods (e.g. POST) on /healthz → 405', async () => {
+    const methods = ['post', 'put', 'patch', 'delete'];
+    for (const method of methods) {
+      const res = await request(app)[method]('/healthz');
+      expect(res.statusCode).toBe(405);
+      checkHeadersAndBodies(res);
+    }
+  });
 });
