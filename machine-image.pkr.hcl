@@ -34,7 +34,7 @@ variable "subnet_id" { //used
 
 source "amazon-ebs" "my-aws-ami" {
   region   = var.aws_region
-  ami_name = "csye6225_spring_2025_app_${formatdate("YYYY_MM_DD", timestamp())}"
+  ami_name = "csye6225_app_${formatdate("YYYY_MM_DD_HH_mm_ss", timestamp())}"
 
   ami_description = "AMI for CSYE 6225 Spring 2025"
   instance_type   = "t2.small"
