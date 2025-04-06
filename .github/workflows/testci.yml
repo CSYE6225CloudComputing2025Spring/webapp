@@ -47,4 +47,4 @@ jobs:
           echo "MySQL is running."
 
       - name: Run Test Suites
-        run: npm test
+        run: npm test -- --detectOpenHandles

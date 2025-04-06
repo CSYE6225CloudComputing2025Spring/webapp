@@ -347,8 +347,11 @@ app.delete('/v1/file/:id', async (req, res) => {
 sequelize.authenticate()
     .then(() => sequelize.sync())
     .then(() => {
-        app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+        if (require.main === module) {
+            app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+        }
     })
     .catch(err => console.error('Error in database connection:', err));
 
 module.exports = app;
+
