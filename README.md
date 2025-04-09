@@ -11,7 +11,7 @@ NPM (Node Package Manager)
 Relational Database: MySQL 
 ORM Framework: JavaScript: Sequelize
 
-# API Endpoint
+# API Endpoints
 /healthz:
 Insert the record in the health check table.
 Return HTTP 200 OK if the record was inserted successfully.
