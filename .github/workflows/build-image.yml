@@ -100,7 +100,7 @@ jobs:
       - name: Create new Launch Template version with latest AMI
         if: matrix.cloud == 'aws'
         run: |
-          echo "Fetching latest LT version for csye6225-asg-launch-template..."
+          echo "Getting the newest version of the launch template: csye6225-asg-launch-template..."
           LATEST_VERSION=$(aws ec2 describe-launch-templates \
             --launch-template-names "csye6225-asg-launch-template" \
             --query 'LaunchTemplates[0].LatestVersionNumber' \
@@ -123,15 +123,15 @@ jobs:
       - name: Update Auto Scaling Group to use latest Launch Template Version
         if: matrix.cloud == 'aws'
         run: |
-          echo "Updating ASG to use LT version $NEW_LT_VERSION"
+          echo "Updating Auto Scaling Group to use LT version $NEW_LT_VERSION"
           aws autoscaling update-auto-scaling-group \
             --auto-scaling-group-name csye6225-as-group \
             --launch-template "LaunchTemplateName=csye6225-asg-launch-template,Version=$NEW_LT_VERSION"
 
-      - name: Start Instance Refresh
+      - name: Issue Instance Refresh
         if: matrix.cloud == 'aws'
         run: |
-          echo "Triggering instance refresh on ASG..."
+          echo "Issuing instance refresh command to Auto Scaling Group..."
           REFRESH_ID=$(aws autoscaling start-instance-refresh \
             --auto-scaling-group-name csye6225-as-group \
             --strategy Rolling \
@@ -140,7 +140,7 @@ jobs:
           echo "REFRESH_ID=$REFRESH_ID" >> $GITHUB_ENV
           echo "Started instance refresh with ID: $REFRESH_ID"
 
-      - name: Wait for Instance Refresh to complete
+      - name: Wait for Instance Refresh to complete before exiting
         if: matrix.cloud == 'aws'
         run: |
           echo "Waiting for instance refresh to complete..."
@@ -156,10 +156,10 @@ jobs:
           done
 
           if [ "$STATUS" != "Successful" ]; then
-            echo "Instance refresh failed with status: $STATUS"
+            echo "Instance refresh did not succeed. Final status: $STATUS"
             exit 1
           fi
 
-          echo "Instance refresh completed successfully."
+          echo "All instances refreshed successfully — deployment complete!"
 
   
