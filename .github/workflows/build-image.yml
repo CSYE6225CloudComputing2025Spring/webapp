@@ -80,8 +80,14 @@ jobs:
       - name: Get AWS AMI ID
         if: matrix.cloud == 'aws'
         run: |
-          AMI_ID=$(aws ec2 describe-images --owners self --query 'Images[-1].ImageId' --output text)
+          AMI_ID=$(aws ec2 describe-images \
+           --owners self \
+           --region us-east-1 \
+           --query 'Images[?State==`available`] | sort_by(@, &CreationDate)[-1].ImageId' \
+           --output text)
+
           echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+
   
       - name: Share AWS AMI with DEMO Account
         if: matrix.cloud == 'aws'
