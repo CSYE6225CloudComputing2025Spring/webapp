@@ -344,6 +344,70 @@ app.delete('/v1/file/:id', async (req, res) => {
     res.status(204).send();
 });
 
+// for demo
+app.get('/cicd', async (req, res) => {
+    const start = Date.now();
+    statsdtool.increment('api.cicd.get.call_times');
+
+    if (
+        (Object.keys(req.query).length > 0) ||
+        (req.body && Object.keys(req.body).length > 0) ||
+        (typeof req.body === 'string' && req.body.trim().length > 0)
+    ) {
+        statsdtool.timing('api.cicd.get.process_duration', Date.now() - start);
+
+        res.status(400).set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        }).end();
+        logger.warn(`${req.method} ${req.url} ${res.statusCode}`);
+        return;
+    }
+
+    try {
+        const dbStart = Date.now();
+        await HealthCheck.create({});
+        statsdtool.timing('api.cicd.db_duration', Date.now() - dbStart);
+        statsdtool.timing('api.cicd.get.process_duration', Date.now() - start);
+
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        });
+
+        return res.status(200).end();
+    } catch (error) {
+        statsdtool.timing('api.cicd.get.process_duration', Date.now() - start);
+
+        res.status(503).set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        }).end();
+        logger.error(`${req.method} ${req.url} ${res.statusCode} could not insert cicd health record`, error);
+        return;
+    }
+});
+
+app.all('/cicd', (req, res) => {
+    if (req.method !== 'GET') {
+        statsdtool.increment('api.cicd.not_allowed_method.call_times');
+
+        res.status(405).set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        }).end();
+
+        statsdtool.timing('api.cicd.not_allowed_method.process_duration', Date.now());
+        logger.warn(`${req.method} ${req.url} ${res.statusCode} method not allowed`);
+    }
+});
+
+//
+
 sequelize.authenticate()
     .then(() => sequelize.sync())
     .then(() => {

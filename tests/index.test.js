@@ -1,9 +1,5 @@
-// 注：不再需要 dotenv
-// require('dotenv').config({ path: '.env.test' });
-
 const request = require('supertest');
 
-// 手动注入 process.env，兼容 GitHub Actions 里的 service.mysql.env
 process.env.DB_HOST = '127.0.0.1';
 process.env.DB_PORT = '3306';
 process.env.DB_USER = 'root';
@@ -16,7 +12,6 @@ process.env.PORT = '3001';
 const app = require('../index');
 const { Sequelize, DataTypes } = require('sequelize');
 
-// 使用真实数据库连接
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -28,7 +23,6 @@ const sequelize = new Sequelize(
   }
 );
 
-// 重新定义 HealthCheck 模型
 const HealthCheck = sequelize.define(
   'HealthCheck',
   {
@@ -49,7 +43,6 @@ const HealthCheck = sequelize.define(
   }
 );
 
-// 验证 HTTP header
 const checkHeadersAndBodies = (res) => {
   expect(res.headers['cache-control']).toBe('no-cache, no-store, must-revalidate');
   expect(res.headers['pragma']).toBe('no-cache');
@@ -71,19 +64,19 @@ afterEach(async () => {
 });
 
 describe('Healthz endpoint with real DB', () => {
-  test('GET /healthz with query string → 400', async () => {
+  test('if there are query parameters in healthz get method, 400 should return', async () => {
     const res = await request(app).get('/healthz?name=test');
     expect(res.statusCode).toBe(400);
     checkHeadersAndBodies(res);
   });
 
-  test('GET /healthz with request body → 400', async () => {
+  test('if there are request body in healthz get method, 400 should return', async () => {
     const res = await request(app).get('/healthz').send({ key: 'value' });
     expect(res.statusCode).toBe(400);
     checkHeadersAndBodies(res);
   });
 
-  test('Valid GET /healthz inserts record → 200', async () => {
+  test('healthz get method, no query meters and empty request body, if record was inserted successfully, 200 should return', async () => {
     const res = await request(app).get('/healthz');
     expect(res.statusCode).toBe(200);
     const records = await HealthCheck.findAll();
@@ -91,7 +84,7 @@ describe('Healthz endpoint with real DB', () => {
     checkHeadersAndBodies(res);
   });
 
-  test('Other methods (e.g. POST) on /healthz → 405', async () => {
+  test('methods except get method, 405 method not allowed should return', async () => {
     const methods = ['post', 'put', 'patch', 'delete'];
     for (const method of methods) {
       const res = await request(app)[method]('/healthz');
