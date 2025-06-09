@@ -1,7 +1,7 @@
 # 🛠️ File Management Rest API CI/CD & Packer AMI Build
 
 This repository handles **REST API**,**CI/CD pipeline**, **Packer AMI builds**, and **EC2 deployment automation** for the CSYE6225 web application.  
-It works in conjunction with the [csye6225-webapp](https://github.com/your-org/csye6225-webapp) repository (contains Terraform infrastructure code). You should apply the terraform code in that repo first and then commit in this repo to trigger the CI/CD and Packer AMI Build.
+It works in conjunction with the [CSYE6225CloudComputing2025Spring/tf-aws-infra](https://github.com/CSYE6225CloudComputing2025Spring/tf-aws-infra) repository (contains Terraform infrastructure code). You should apply the terraform code in that repo first and then commit in this repo to trigger the CI/CD and Packer AMI Build.
 
 ---
 
@@ -33,7 +33,7 @@ Relational Database: MySQL(RDS)
 ORM Framework: JavaScript: Sequelize  
 
 ### API Endpoints  
-####🔍 Health Check  
+#### 🔍 Health Check  
 GET /healthz  
 Performs application and database health validation.  
 Accepts only GET. Any other method returns 405 Method Not Allowed.  
