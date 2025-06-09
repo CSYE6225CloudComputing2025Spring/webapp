@@ -29,7 +29,7 @@ This Node.js Express API provides secure, RESTful endpoints for file upload, ret
 Operating System**: Ubuntu 24.04 LTS  
 Programming Language: Node.js 
 NPM (Node Package Manager)   
-Relational Database: MySQL(RDS)
+Relational Database: MySQL(RDS)  
 ORM Framework: JavaScript: Sequelize  
 
 ### API Endpoints  
