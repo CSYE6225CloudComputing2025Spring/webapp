@@ -32,34 +32,34 @@ NPM (Node Package Manager)
 Relational Database: MySQL(RDS)
 ORM Framework: JavaScript: Sequelize  
 
-### API Endpoints
-####🔍 Health Check
-GET /healthz
-Performs application and database health validation.
-Accepts only GET. Any other method returns 405 Method Not Allowed.
-Returns 200 OK if healthy; 503 if DB write fails; 400 if body/query is not empty.
+### API Endpoints  
+####🔍 Health Check  
+GET /healthz  
+Performs application and database health validation.  
+Accepts only GET. Any other method returns 405 Method Not Allowed.  
+Returns 200 OK if healthy; 503 if DB write fails; 400 if body/query is not empty.  
 
-####📤 File Upload
-POST /v1/file
-Uploads a file (expected field: profilePic) to Amazon S3.
-Saves file metadata to RDS (MySQL).
-Responds with metadata including file id, url, upload_date.
-Returns 400 if file is missing or empty.
+#### 📤 File Upload    
+POST /v1/file  
+Uploads a file (expected field: profilePic) to Amazon S3.  
+Saves file metadata to RDS (MySQL).  
+Responds with metadata including file id, url, upload_date.  
+Returns 400 if file is missing or empty.  
 
-####📄 Get File Metadata
-GET /v1/file/:id
-Retrieves metadata (filename, URL, upload date) of the uploaded file using its UUID.
-Returns 404 if file not found.
+#### 📄 Get File Metadata  
+GET /v1/file/:id  
+Retrieves metadata (filename, URL, upload date) of the uploaded file using its UUID.  
+Returns 404 if file not found.  
 
-####🗑️ Delete File
-DELETE /v1/file/:id
-Deletes both the file in S3 and its metadata in RDS.
-Returns 404 if file ID is invalid.
-Returns 204 No Content on successful deletion.
+#### 🗑️ Delete File    
+DELETE /v1/file/:id  
+Deletes both the file in S3 and its metadata in RDS.  
+Returns 404 if file ID is invalid.  
+Returns 204 No Content on successful deletion.  
 
-####❌ Invalid Method Handling
-All unsupported methods (e.g., PATCH, PUT, OPTIONS, etc.) return: 
-405 Method Not Allowed 
+#### ❌ Invalid Method Handling  
+All unsupported methods (e.g., PATCH, PUT, OPTIONS, etc.) return:   
+405 Method Not Allowed   
 
 
 
