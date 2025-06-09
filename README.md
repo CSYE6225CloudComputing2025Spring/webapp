@@ -1,7 +1,7 @@
 # 🛠️ File Management Rest API CI/CD & Packer AMI Build
 
 This repository handles **REST API**,**CI/CD pipeline**, **Packer AMI builds**, and **EC2 deployment automation** for the CSYE6225 web application.  
-It works in conjunction with the [CSYE6225CloudComputing2025Spring/tf-aws-infra](https://github.com/CSYE6225CloudComputing2025Spring/tf-aws-infra) repository (contains Terraform infrastructure code). You should apply the terraform code in that repo first and then commit in this repo to trigger the CI/CD and Packer AMI Build.
+It works collabratively with the [CSYE6225CloudComputing2025Spring/tf-aws-infra](https://github.com/CSYE6225CloudComputing2025Spring/tf-aws-infra) repository (contains Terraform infrastructure code). You should apply the terraform code in that repo first and then commit in this repo to trigger the CI/CD and Packer AMI Build.
 
 ---
 
